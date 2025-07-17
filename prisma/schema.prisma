@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String        @id @default(cuid())
+  name          String?
+  email         String?       @unique
+  emailVerified DateTime?
+  password      String?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  listings      CardListing[] // User's created listings
+  bids          AuctionBid[]  @relation("UserBids") // Reverse relation for bids
+  orders        Order[]       @relation("BuyerOrders") // User's purchases
+  CartItem      CartItem[]
+}
+
+model CardListing {
+  id             String   @id @default(cuid())
+  sellerId       String
+  title          String
+  playerName     String
+  year           String
+  brand          String
+  cardNumber     String
+  variation      String
+  condition      String
+  category       String
+  listingType    String
+  price          Float
+  imageUrl       String
+  gradingCompany String?   // ← added
+  grade          String?   // ← added
+  createdAt      DateTime @default(now())
+  quantity       Int      @default(1)
+  soldCount      Int      @default(0)
+
+  seller     User         @relation(fields: [sellerId], references: [id])
+  extraCards ExtraCard[]  @relation("MainCardExtras")
+  bids       AuctionBid[] @relation("CardBids")
+  orders     Order[]      @relation("CardOrders")
+  CartItem   CartItem[]
+}
+
+model ExtraCard {
+  id         String   @id @default(cuid())
+  mainCardId String
+  playerName String
+  year       String
+  brand      String
+  cardNumber String
+  variation  String
+  condition  String
+  imageUrl   String
+  createdAt  DateTime @default(now())
+
+  mainCard CardListing @relation("MainCardExtras", fields: [mainCardId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuctionBid {
+  id        String   @id @default(cuid())
+  cardId    String
+  userId    String
+  amount    Float
+  createdAt DateTime @default(now())
+
+  card CardListing @relation("CardBids", fields: [cardId], references: [id], onDelete: Cascade)
+  user User        @relation("UserBids", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id              String   @id @default(cuid())
+  buyerId         String
+  cardId          String
+  quantity        Int      @default(1)
+  priceAtPurchase Float
+  status          String   @default("pending")
+  trackingNumber  String? // ✅ NEW
+  createdAt       DateTime @default(now())
+
+  buyer User        @relation("BuyerOrders", fields: [buyerId], references: [id])
+  card  CardListing @relation("CardOrders", fields: [cardId], references: [id])
+}
+
+model CartItem {
+  id             String   @id @default(cuid())
+  userId         String
+  cardId         String
+  gradingOption  String?
+  includeHolder  Boolean
+  quantity       Int      @default(1)
+  gradingCompany String?
+  grade          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  card CardListing @relation(fields: [cardId], references: [id])
+}

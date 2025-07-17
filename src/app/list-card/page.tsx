@@ -26,10 +26,10 @@ export default function AddListingPage() {
   const grades = ["", "1", "1.5", "2", "2.5", "3", "3.5", "4", "4.5", "5", "5.5", "6", "6.5", "7", "7.5", "8", "8.5", "9", "9.5", "10", "10+"]
 
   useEffect(() => {
-    const { year, brand, playerName, variation } = formData
-    const generatedTitle = `${year} ${brand} ${playerName}${variation ? ` ${variation}` : ""}`.trim()
-    setFormData((prev) => ({ ...prev, title: generatedTitle }))
-  }, [formData.year, formData.brand, formData.playerName, formData.variation])
+  const { year, brand, playerName, variation } = formData
+  const generatedTitle = `${year} ${brand} ${playerName}${variation ? ` ${variation}` : ""}`.trim()
+  setFormData((prev) => ({ ...prev, title: generatedTitle }))
+}, [formData])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
